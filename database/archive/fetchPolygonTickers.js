@@ -1,9 +1,7 @@
 const { fetchTickers } = require('./polygon.js');
 const { db, sequelize } = require('../index');
-const { SNP } = require('../../lib/data.js');
 
 const main = async () => {
-  console.log(SNP);
   console.log('FETCHING TICKERS...');
 
   let count = 0;
@@ -14,9 +12,7 @@ const main = async () => {
     const res = await fetchTickers(1000, URL);
 
     for (let i = 0; i < res.data.results.length; i++) {
-      if (SNP.includes(res.data.results[i].ticker)) {
-        await db.Ticker.upsert(res.data.results[i]);
-      }
+      await db.TickerPolygon.upsert(res.data.results[i]);
     }
 
     if (res.data.next_url) {
