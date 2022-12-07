@@ -16,19 +16,13 @@ module.exports.fetchTickers = async () => {
   }));
 };
 
-module.exports.fetchPrices = async (exchange, date, extended = true) => {
-  //if date is not provided the set date to yyyy-mm-dd of yestereday
+module.exports.fetchPrices = async (ticker) => {
+  //fetch all historical prices for a single ticker from EOD API
 
-  const dateparam = date ? `&date=${date}&` : '';
-  const filterparam = extended ? '&filter=extended' : '';
-
-  const URL = `https://eodhistoricaldata.com/api/eod-bulk-last-day/${exchange}?api_token=${KEY}&fmt=json${dateparam}${filterparam}`;
+  let URL = `https://eodhistoricaldata.com/api/eod/${ticker}?api_token=${KEY}&fmt=json&from=2000-01-01`;
   const res = await axios.get(URL);
-
   return res.data.map((x) => ({
-    ticker: x.code,
-    market_cap: x.MarketCapitalization,
-    beta: x.Beta,
+    ticker: ticker,
     ...x,
   }));
 };

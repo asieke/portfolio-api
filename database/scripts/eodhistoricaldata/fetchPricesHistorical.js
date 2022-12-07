@@ -1,59 +1,28 @@
 const { db, sequelize } = require('../../index.js');
 const { fetchPrices, fetchUserData, fetchTradingDates } = require('./wrapper.js');
+const { getTickers } = require('../../../models/Ticker.js');
+const { getTickerCount } = require('../../../models/Price.js');
+
+const THRESHOLD = 80000;
 
 const main = async () => {
-  const dates = await fetchTradingDates();
+  // fetchUserData and output to console
 
-  for (let i = 0; i < dates.length; i++) {
-    let result = await db.Price.findOne({ where: { date: dates[i] } });
+  const data = await getTickers();
 
-    if (result) {
-      console.log('...skipping ', dates[i]);
+  for (let i = 0; i < data.length; i++) {
+    let count = await getTickerCount(data[i].ticker);
+
+    if (count === 0) {
+      const prices = await fetchPrices(data[i].ticker);
+      await db.Price.bulkCreate(prices);
+      console.log(`[${i},${data.length}]`, '...data inserted', data[i].ticker, prices.length);
     } else {
-      console.log('...inserting', dates[i]);
-      const data = await fetchPrices('US', dates[i], false);
-      await db.Price.bulkCreate(data);
+      console.log(`[${i},${data.length}]`, '...data skipped', data[i].ticker);
     }
   }
 
   db.close();
-
-  // console.log('FETCHING EOD DATA...');
-
-  // let { apiRequests, dailyRateLimit } = await fetchUserData();
-
-  // let date = new Date('2022-01-01');
-  // let today = new Date();
-  // let data = [];
-
-  // while (date < today) {
-  //   //if its a weekday
-  //   if (date.getDay() !== 0 && date.getDay() !== 6) {
-  //     let dateStr = date.toISOString().slice(0, 10);
-
-  //     let result = await db.Price.findOne({ where: { date: dateStr } });
-
-  //     if (!!result === false) {
-  //       const data = await fetchPrices('US', dateStr, false);
-  //       await db.Price.bulkCreate(data);
-  //       console.log(dateStr, '...created', apiRequests);
-  //       apiRequests += 100;
-  //     } else {
-  //       console.log(dateStr, '...already exists', apiRequests);
-  //     }
-  //   }
-
-  //   if (apiRequests > dailyRateLimit - 1000) break;
-
-  //   date.setDate(date.getDate() + 1);
-  // }
-
-  // // const data = await fetchPrices('US', '2022-11-29');
-  // // console.log('...data fetched');
-  // // for (let i = 0; i < data.length; i++) {
-  // //   await db.Price.upsert(data[i]);
-  // // }
-  // // console.log('...data inserted');
 };
 
 main();
