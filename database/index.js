@@ -108,11 +108,96 @@ const db = {
     }
   ),
 
+  //create a users table
+  User: sequelize.define('users', {
+    username: Sequelize.STRING,
+    password: Sequelize.STRING,
+    name: Sequelize.STRING,
+    email: Sequelize.STRING,
+  }),
+
+  //create a table called Portfolio that tracks a user's portfolio
+  Portfolio: sequelize.define('portfolios', {
+    name: Sequelize.STRING,
+    description: Sequelize.TEXT,
+    //create a foreign key that links to the user table
+    userId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+  }),
+
+  //create a table called account_types that tracks the type of account
+  AccountType: sequelize.define('account_types', {
+    name: Sequelize.STRING,
+    description: Sequelize.TEXT,
+    taxable: Sequelize.BOOLEAN,
+  }),
+
+  //create a table called Accounts, each account belongs to a portfolio create a foreign key that links account to portfolio
+  Account: sequelize.define('accounts', {
+    name: Sequelize.STRING,
+    description: Sequelize.TEXT,
+    portfolioId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'portfolios',
+        key: 'id',
+      },
+    },
+    //create a foreign key that links account to account_type
+    accountTypeId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'account_types',
+        key: 'id',
+      },
+    },
+  }),
+
+  //create a table called Positions, each position belongs to an account
+  Position: sequelize.define('positions', {
+    ticker: Sequelize.STRING,
+    quantity: Sequelize.FLOAT,
+    accountId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'accounts',
+        key: 'id',
+      },
+    },
+  }),
+
+  //create a table called Transactions, each transaction belongs to an account
+  Transaction: sequelize.define('transactions', {
+    date: Sequelize.DATE,
+    ticker: Sequelize.STRING,
+    quantity: Sequelize.FLOAT,
+    price: Sequelize.FLOAT,
+    action: Sequelize.STRING,
+    fees: Sequelize.FLOAT,
+    accountId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'accounts',
+        key: 'id',
+      },
+    },
+  }),
+
   initialize: async () => {
     await db.Ticker.sync({ force: true });
     await db.Price.sync({ force: true });
     await db.Split.sync({ force: true });
     await db.Dividend.sync({ force: true });
+    await db.User.sync({ force: true });
+    await db.Portfolio.sync({ force: true });
+    await db.AccountType.sync({ force: true });
+    await db.Account.sync({ force: true });
+    await db.Transaction.sync({ force: true });
   },
   close: async () => {
     await sequelize.close();
